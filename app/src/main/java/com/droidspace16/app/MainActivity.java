@@ -124,6 +124,14 @@ public class MainActivity extends Activity {
         buttonParams.topMargin = dp(8);
         root.addView(install, buttonParams);
 
+        Button setup = new Button(this);
+        setup.setText("How to Set Up a Guest OS");
+        setup.setAllCaps(false);
+        setup.setOnClickListener(v -> showGuestSetupGuide());
+        LinearLayout.LayoutParams setupParams = matchWrap();
+        setupParams.topMargin = dp(8);
+        root.addView(setup, setupParams);
+
         TextView note = new TextView(this);
         note.setText("Compatibility note: the official QubeVM ARM build requires Android 11 or newer and a 64-bit ARM (arm64-v8a) phone. It does not provide an ARMv7/32-bit host build. Performance depends on the guest OS image and phone hardware. The engine is still a separate app.");
         note.setTextColor(Color.rgb(175, 185, 205));
@@ -293,6 +301,27 @@ public class MainActivity extends Activity {
                 .setNegativeButton("Cancel", null)
                 .show();
         }
+    }
+
+    private void showGuestSetupGuide() {
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("Set up your virtual machine")
+            .setMessage(
+                "1. Install the QubeVM engine.\n\n" +
+                "2. Tap START VIRTUAL MACHINE to open QubeVM.\n\n" +
+                "3. In QubeVM, create a new virtual machine and choose a guest OS image that matches the virtual hardware. You must obtain the OS image separately; DroidSpace does not bundle Android or Windows images.\n\n" +
+                "4. Set a modest RAM allocation first, save the VM, then start it. First boot can take several minutes.\n\n" +
+                "Important: emulation is demanding and may be slow on phones without hardware acceleration. Keep enough free storage and stop if the phone overheats.")
+            .setPositiveButton("Open QubeVM guide", (dialog, which) -> {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW,
+                        Uri.parse("https://github.com/rhn-1k/QubeVM")));
+                } catch (Exception ignored) {
+                    Toast.makeText(this, "Could not open the QubeVM guide.", Toast.LENGTH_LONG).show();
+                }
+            })
+            .setNegativeButton("Close", null)
+            .show();
     }
 
     private void openSimulator() {
