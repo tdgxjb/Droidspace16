@@ -220,6 +220,15 @@ public class MainActivity extends Activity {
         launchInstaller(apkUri);
     }
 
+    @Override protected void onDestroy() {
+        try {
+            unregisterReceiver(downloadReceiver);
+        } catch (IllegalArgumentException ignored) {
+            // Receiver was already unregistered; safe to continue destroying the activity.
+        }
+        super.onDestroy();
+    }
+
     @Override protected void onResume() {
         super.onResume();
         if (pendingInstallUri != null
