@@ -1,28 +1,31 @@
-# DroidSpace VM — বাস্তব ভার্চুয়াল মেশিন পরিকল্পনা
+# DroidSpace VM — বাস্তব QEMU ইঞ্জিন সংযুক্তির কাজের নথি
 
-## লক্ষ্য
-DroidSpace VM হবে Android ফোনে চালানো একটি ভার্চুয়াল মেশিন অ্যাপ, যেখানে ব্যবহারকারী আলাদা guest OS image বেছে নিয়ে সেটি চালাতে পারবেন। এটি শুধু WebView বা Android-স্টাইল UI হবে না।
+## বর্তমান লক্ষ্য
+DroidSpace-এর ভেতরেই QEMU-চালিত গেস্ট VM চালানো। আলাদা QubeVM অ্যাপ খুলে দেওয়া কেবল অস্থায়ী bridge; এটিকে embedded VM বলা যাবে না।
 
-## প্রযুক্তিগত ভিত্তি
-- Emulator engine: QEMU, Android-এ ব্যবহারের জন্য Limbo-এর QEMU integration থেকে প্রযুক্তিগত ভিত্তি যাচাই করা।
-- প্রথম বাস্তব guest target: Android-x86 ISO বা অন্য bootable guest image, ব্যবহারকারী নিজে বেছে নেবেন।
-- App layer: VM profile, RAM/CPU/storage settings, image picker, start/stop, console/display.
-- Android guest চালাতে x86 image-কে ARM ফোনে emulate করতে হতে পারে; তাই performance খুব ধীর হতে পারে এবং সব Android image boot করবে না।
-- ARM64 guest image থাকলেও QEMU software emulation-এর পারফরম্যান্স হার্ডওয়্যার virtualization-এর সমান নয়।
+## যাচাইকৃত upstream তথ্য
+- Upstream: https://github.com/rhn-1k/QubeVM
+- লাইসেন্স: GPL-3.0 (QubeVM repository metadata এবং COPYING অনুযায়ী)।
+- QubeVM-এ QEMU native Android shared libraries এবং Java UI আলাদা module-এ আছে:
+  - `qube-android-lib`
+  - `qube-android-arm`
+- upstream developer notes-এ Android NDK r30, JDK 17, Meson/Ninja, QEMU source ও patched dependencies দরকার বলা হয়েছে।
+- ARM64 host build-এর জন্য upstream configuration-এ `BUILD_HOST=arm64-v8a`; guest architecture build আলাদা বিষয়।
+- QubeVM-এর stock Android-এ `/dev/kvm` সাধারণত নেই; তাই software TCG emulation-ই প্রত্যাশিত। x86 Android guest ARM ফোনে ধীর হতে পারে।
 
-## বাধ্যতামূলক সীমা
-- VMOS-এর মতো proprietary optimized Android guest runtime পুনরুৎপাদন করা যাবে না যদি তার engine/API উন্মুক্ত না থাকে।
-- Android OS image স্বয়ংক্রিয়ভাবে bundled বা ডাউনলোড করা হবে না; লাইসেন্স ও আকার যাচাই করে ব্যবহারকারী-নির্বাচিত image দিয়ে শুরু করা হবে।
-- QEMU-এর native shared libraries (Android NDK) অ্যাপে সংযুক্ত না হওয়া পর্যন্ত এটি বাস্তব VM নয়।
-- এই রিপোজিটরির বর্তমান WebView wrapper-কে পূর্ণ VM হিসেবে গণ্য করা যাবে না।
+## কাজের ধাপ
+1. **Source/license integration:** upstream source-এর নির্দিষ্ট release/tag pin করা; GPL-3.0 অনুযায়ী copyright, license text, source offer ও notices বজায় রাখা।
+2. **Native build pipeline:** GitHub Actions-এ NDK r30/JDK 17 toolchain ও upstream dependency/patch build reproducibly চালানো। প্রথমে শুধু `arm64-v8a` host target।
+3. **Android module integration:** upstream QubeVM Java library ও ARM guest front-end module-কে DroidSpace-এর Gradle project-এ আনতে হবে; manifest/resources/package collisions ঠিক করতে হবে। শুধু APK download বা package launch embedded integration নয়।
+4. **VM profile bridge:** QubeVM-এর machine/database/service API ব্যবহার করে guest VM create/select/start/stop, disk/ISO picker ও persistent config-কে DroidSpace UI-তে যুক্ত করা।
+5. **Guest boot validation:** ব্যবহারকারী-নির্বাচিত বৈধ boot image দিয়ে Android-x86/অন্য guest boot পরীক্ষা; console, input, storage, networking ও crash recovery যাচাই।
+6. **Release gate:** CI build success যথেষ্ট নয়। বাস্তব ফোনে guest boot সফলভাবে পরীক্ষা না হওয়া পর্যন্ত release-কে experimental বলতে হবে।
 
-## পরবর্তী প্রকৌশল ধাপ
-1. QEMU/Limbo source এবং GPL-2.0 license compatibility যাচাই।
-2. Android NDK দিয়ে ARM64 host-এর জন্য QEMU native engine build করা।
-3. engine JNI/service interface তৈরি করে VM lifecycle সংযুক্ত করা।
-4. একটি অনুমোদিত ছোট guest image দিয়ে boot test করা।
-5. Android guest image boot, input, networking, storage, এবং crash recovery পরীক্ষা করা।
-6. সফল পরীক্ষার পরই APK-কে functional VM build বলা।
+## এখনো করা হয়নি
+- QEMU native `.so` লাইব্রেরি DroidSpace APK-তে সংযুক্ত করা হয়নি।
+- QubeVM-এর Java modules DroidSpace-এ import করা হয়নি।
+- DroidSpace থেকে সরাসরি guest VM create/start/stop করা যায় না।
+- Android guest boot test সফল হয়েছে এমন প্রমাণ নেই।
 
-## বর্তমান অবস্থা
-এই ফাইলটি লক্ষ্য ও প্রযুক্তিগত পরিকল্পনা নথিভুক্ত করে। QEMU engine এখনও অ্যাপে যুক্ত বা যাচাইকৃত নয়; তাই এটি এখনও কার্যকর Android VM নয়।
+## প্রথম বাস্তব লক্ষ্য
+একটি ARM64 debug build-এ upstream QubeVM engine ও UI-কে DroidSpace package-এর মধ্যে আনতে পারা। Build error/manifest conflict সমাধান করার পরই VM profile integration শুরু হবে।
