@@ -102,6 +102,13 @@ public class MainActivity extends Activity {
         detail.setPadding(0, dp(10), 0, dp(20));
         root.addView(detail);
 
+        TextView deviceInfo = new TextView(this);
+        deviceInfo.setText("Phone architecture: " + getHostArchitecture());
+        deviceInfo.setTextColor(Color.rgb(115, 220, 190));
+        deviceInfo.setTextSize(13);
+        deviceInfo.setPadding(0, 0, 0, dp(12));
+        root.addView(deviceInfo);
+
         Button start = new Button(this);
         start.setText("START VIRTUAL MACHINE");
         start.setAllCaps(false);
@@ -118,7 +125,7 @@ public class MainActivity extends Activity {
         root.addView(install, buttonParams);
 
         TextView note = new TextView(this);
-        note.setText("Compatibility note: QubeVM's current release requires Android 11 or newer. Performance depends on the guest OS image and phone hardware. The engine is a separate app at this stage.");
+        note.setText("Compatibility note: the official QubeVM ARM build requires Android 11 or newer and a 64-bit ARM (arm64-v8a) phone. It does not provide an ARMv7/32-bit host build. Performance depends on the guest OS image and phone hardware. The engine is still a separate app.");
         note.setTextColor(Color.rgb(175, 185, 205));
         note.setTextSize(12);
         note.setPadding(0, dp(14), 0, dp(26));
@@ -159,6 +166,17 @@ public class MainActivity extends Activity {
 
         scroll.addView(root);
         setContentView(scroll);
+    }
+
+    private String getHostArchitecture() {
+        String[] abis = android.os.Build.SUPPORTED_ABIS;
+        if (abis == null || abis.length == 0) return "Unknown";
+        StringBuilder result = new StringBuilder();
+        for (String abi : abis) {
+            if (result.length() > 0) result.append(", ");
+            result.append(abi);
+        }
+        return result.toString();
     }
 
     private void startVm() {
