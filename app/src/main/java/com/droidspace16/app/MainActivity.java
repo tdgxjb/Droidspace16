@@ -234,7 +234,28 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean supportsOfficialEngine() {
+        if (android.os.Build.VERSION.SDK_INT < 30) {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("Android version not supported")
+                .setMessage("The official QubeVM engine requires Android 11 or newer.")
+                .setPositiveButton("OK", null)
+                .show();
+            return false;
+        }
+        for (String abi : android.os.Build.SUPPORTED_ABIS) {
+            if ("arm64-v8a".equals(abi)) return true;
+        }
+        new android.app.AlertDialog.Builder(this)
+            .setTitle("64-bit ARM is required")
+            .setMessage("The official QubeVM engine available here is for arm64-v8a. This phone does not report that ABI, so installing this engine may fail. I will not download an incompatible APK.")
+            .setPositiveButton("OK", null)
+            .show();
+        return false;
+    }
+
     private void openEngineDownload() {
+        if (!supportsOfficialEngine()) return;
         try {
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(QUBEVm_APK));
             startActivity(intent);
