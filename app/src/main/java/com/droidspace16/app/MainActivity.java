@@ -366,13 +366,14 @@ public class MainActivity extends Activity {
 
     private void showGuestSetupGuide() {
         new android.app.AlertDialog.Builder(this)
-            .setTitle("Set up your virtual machine")
+            .setTitle("Boot a real Android guest")
             .setMessage(
-                "1. Install the QubeVM engine.\n\n" +
-                "2. Tap START VIRTUAL MACHINE to open QubeVM.\n\n" +
-                "3. In QubeVM, create a new virtual machine and choose a guest OS image that matches the virtual hardware. You must obtain the OS image separately; DroidSpace does not bundle Android or Windows images.\n\n" +
-                "4. Set a modest RAM allocation first, save the VM, then start it. First boot can take several minutes.\n\n" +
-                "Important: emulation is demanding and may be slow on phones without hardware acceleration. Keep enough free storage and stop if the phone overheats.")
+                "This starts a real guest OS in QubeVM, not the design preview.\n\n" +
+                "1. Install the QubeVM engine, then tap START VIRTUAL MACHINE.\n\n" +
+                "2. In QubeVM, create a new VM. For a first test, choose an Android-x86 ISO image from its official project source. Android-x86 is an x86 guest and must be emulated on this ARM phone, so it may be very slow and some builds may not boot.\n\n" +
+                "3. For this 4 GB RAM phone, start conservatively: assign about 1024 MB RAM and 1 CPU, use a virtual disk with enough real free storage, and select a compatible x86 machine/display configuration. Save the VM.\n\n" +
+                "4. Attach the ISO as a CD-ROM/boot image and start the VM. Follow the guest installer if you want a persistent install; keep the virtual disk attached for later boots.\n\n" +
+                "DroidSpace does not bundle or download an Android OS image, and it cannot report guest boot success yet. If the screen stays black or boot fails, stop the VM and try another compatible image/configuration. Emulation may heat the phone; stop if it becomes too hot.")
             .setPositiveButton("Open QubeVM guide", (dialog, which) -> {
                 try {
                     startActivity(new Intent(Intent.ACTION_VIEW,
@@ -384,7 +385,6 @@ public class MainActivity extends Activity {
             .setNegativeButton("Close", null)
             .show();
     }
-
     private void openSimulator() {
         try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(SIMULATOR_URL))); }
         catch (Exception e) {
