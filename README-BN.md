@@ -1,27 +1,33 @@
-# DroidSpace 16 — Android APK wrapper
+# DroidSpace VM — Android VM launcher
 
-এটি DroidSpace 16-এর বর্তমান Lovable web preview-কে Android WebView অ্যাপের মধ্যে খোলার একটি প্রাথমিক native Android project।
+DroidSpace VM হলো একটি native Android launcher, যা আলাদা QubeVM (QEMU-based) অ্যাপের সঙ্গে কাজ করার জন্য তৈরি। এটি নিজে QEMU engine বা guest OS image bundle করে না।
 
-## গুরুত্বপূর্ণ সীমাবদ্ধতা
-- এটি নিজে থেকে সম্পূর্ণ Android OS চালায় না।
-- এটি APK ফাইলগুলো ইনস্টল/চালানোর virtual machine নয়।
-- বর্তমান UI ইন্টারনেটের মাধ্যমে Lovable preview থেকে লোড হয়; তাই preview URL কাজ করা এবং ইন্টারনেট থাকা দরকার।
-- এটি একটি debug APK তৈরি করার source project; APK বাইনারি build workflow সফল হওয়ার আগে তৈরি হয়েছে বলে ধরে নেওয়া যাবে না।
-- GitHub Actions workflow চালিয়ে APK তৈরি করার চেষ্টা করা হবে।
+## বর্তমান অ্যাপের ফিচার
+- ফোনের supported CPU ABI দেখায়।
+- Android 11+ এবং arm64-v8a compatibility যাচাই করে।
+- অফিসিয়াল QubeVM ARM64 APK Android Download Manager দিয়ে ডাউনলোড শুরু করে এবং notification progress দেখায়।
+- প্রয়োজন হলে Android-এর “Install unknown apps” সেটিংসে নিয়ে যায়।
+- QubeVM ইনস্টল থাকলে Start Virtual Machine দিয়ে সেটি খোলে।
+- Guest OS setup guide এবং আলাদা design preview রয়েছে।
+- Download receiver lifecycle cleanup যুক্ত করা হয়েছে।
 
-## APK ডাউনলোড করার ধাপ
-1. GitHub repository-এর **Actions** tab খুলুন।
-2. **Build DroidSpace 16 APK** workflow-এর সর্বশেষ run খুলুন।
-3. সফল হলে **Artifacts** থেকে `DroidSpace16-debug-apk` ডাউনলোড করুন।
-4. ZIP extract করে `app-debug.apk` ফাইলটি Android ফোনে install করুন। ফোন চাইলে Chrome/Files থেকে app install করার অনুমতি দিন।
+## যেগুলো এখনও সম্পন্ন/যাচাইকৃত নয়
+- QEMU engine DroidSpace APK-এর ভেতরে embed করা হয়নি; QubeVM আলাদা অ্যাপ।
+- Guest OS image bundled নয়। ব্যবহারকারীকে QubeVM-এ সমর্থিত image বেছে নিতে হবে।
+- VM profile তৈরি/সংরক্ষণ, CPU/RAM/disk settings DroidSpace-এর নিজস্ব UI থেকে নিয়ন্ত্রণ, guest Android boot, guest-এর ভিতরে APK install, networking এবং stop/resume এখনও এই প্রকল্পে end-to-end যাচাই করা হয়নি।
+- ARMv7/32-bit host-এর জন্য অফিসিয়াল QubeVM engine নেই। DroidSpace launcher-এর ARMv7 APK থাকলেই engine ARMv7-তে চলবে না।
+- এই ফোনে সত্যিকারের guest OS boot সফল হয়েছে—এমন দাবি করা হচ্ছে না; বাস্তব ডিভাইসে পরীক্ষা দরকার।
 
-## তথ্য
-Package: `com.droidspace16.app`
-Minimum Android: Android 6.0 (API 23)
-Target SDK: 28 (প্রাথমিক পরীক্ষামূলক build)
+## সর্বশেষ APK ডাউনলোড
+1. [সর্বশেষ GitHub Actions build খুলুন](https://github.com/tdgxjb/Droidspace16/actions/runs/38895268567)।
+2. **Artifacts** অংশে `DroidSpace16-debug-apks` নির্বাচন করুন।
+3. ZIP extract করে আপনার ফোনের উপযুক্ত APK ইনস্টল করুন।
+4. ইনস্টল করার আগে আগের পরীক্ষামূলক build-এর app data দরকার না হলে সেটি মুছে নতুন APK ইনস্টল করতে পারেন।
 
-পূর্ণ Android guest OS ও APK execution আলাদা virtualization প্রকল্প; এই wrapper তা দেয় না।
+## Engine
+- [QubeVM official release](https://github.com/rhn-1k/QubeVM/releases/tag/7.1.3)
+- [QubeVM project guide](https://github.com/rhn-1k/QubeVM)
 
-
-## Build status
+## Build
 GitHub Actions workflow: `.github/workflows/build-apk.yml`.
+Package: `com.droidspace16.app`; minimum Android API 23.
