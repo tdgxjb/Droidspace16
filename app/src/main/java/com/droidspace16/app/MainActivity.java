@@ -180,6 +180,14 @@ public class MainActivity extends Activity {
         imageNote.setPadding(0, dp(6), 0, dp(4));
         root.addView(imageNote);
 
+        Button profiles = new Button(this);
+        profiles.setText("VM Profiles & Tools");
+        profiles.setAllCaps(false);
+        profiles.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, VmProfileActivity.class)));
+        LinearLayout.LayoutParams profilesParams = matchWrap();
+        profilesParams.topMargin = dp(8);
+        root.addView(profiles, profilesParams);
+
         Button setup = new Button(this);
         setup.setText("How to Set Up a Guest OS");
         setup.setAllCaps(false);
