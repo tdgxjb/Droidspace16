@@ -21,3 +21,7 @@ Minimum Android: Android 6.0 (API 23)
 Target SDK: 28 (প্রাথমিক পরীক্ষামূলক build)
 
 পূর্ণ Android guest OS ও APK execution আলাদা virtualization প্রকল্প; এই wrapper তা দেয় না।
+
+
+## Build status
+GitHub Actions workflow: `.github/workflows/build-apk.yml`.
