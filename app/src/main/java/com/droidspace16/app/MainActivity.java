@@ -35,6 +35,8 @@ public class MainActivity extends Activity {
     private LinearLayout root;
     private long engineDownloadId = -1L;
     private Uri pendingInstallUri;
+    private static final int REQUEST_GUEST_IMAGE = 4107;
+    private TextView guestImageStatus;
     private final BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {
@@ -148,6 +150,36 @@ public class MainActivity extends Activity {
         buttonParams.topMargin = dp(8);
         root.addView(install, buttonParams);
 
+        TextView guestImageTitle = new TextView(this);
+        guestImageTitle.setText("GUEST OS IMAGE");
+        guestImageTitle.setTextColor(Color.WHITE);
+        guestImageTitle.setTextSize(14);
+        guestImageTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        guestImageTitle.setPadding(0, dp(18), 0, dp(6));
+        root.addView(guestImageTitle);
+
+        guestImageStatus = new TextView(this);
+        guestImageStatus.setText(getSavedGuestImageLabel());
+        guestImageStatus.setTextColor(Color.rgb(205, 214, 230));
+        guestImageStatus.setTextSize(13);
+        guestImageStatus.setPadding(0, 0, 0, dp(8));
+        root.addView(guestImageStatus);
+
+        Button selectImage = new Button(this);
+        selectImage.setText("Choose Guest ISO / Disk Image");
+        selectImage.setAllCaps(false);
+        selectImage.setOnClickListener(v -> chooseGuestImage());
+        LinearLayout.LayoutParams imageParams = matchWrap();
+        imageParams.topMargin = dp(4);
+        root.addView(selectImage, imageParams);
+
+        TextView imageNote = new TextView(this);
+        imageNote.setText("Selecting an image records access to it in DroidSpace. QubeVM does not expose a verified launch intent for this image, so you must select/attach the image manually inside QubeVM.");
+        imageNote.setTextColor(Color.rgb(175, 185, 205));
+        imageNote.setTextSize(12);
+        imageNote.setPadding(0, dp(6), 0, dp(4));
+        root.addView(imageNote);
+
         Button setup = new Button(this);
         setup.setText("How to Set Up a Guest OS");
         setup.setAllCaps(false);
@@ -237,6 +269,57 @@ public class MainActivity extends Activity {
             result.append(abi);
         }
         return result.toString();
+    }
+
+
+    private void chooseGuestImage() {
+        Intent picker = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        picker.addCategory(Intent.CATEGORY_OPENABLE);
+        picker.setType("*/*");
+        picker.putExtra(Intent.EXTRA_MIME_TYPES, new String[] {
+            "application/x-iso9660-image", "application/octet-stream", "application/x-cd-image"
+        });
+        picker.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        try {
+            startActivityForResult(picker, REQUEST_GUEST_IMAGE);
+        } catch (Exception e) {
+            Toast.makeText(this, "Could not open the file picker.", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_GUEST_IMAGE || resultCode != RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        Uri selected = data.getData();
+        try {
+            int flags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            getContentResolver().takePersistableUriPermission(selected, flags & Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (Exception ignored) {
+            // Some document providers do not support persistable URI grants.
+        }
+        getSharedPreferences("droidspace_vm", MODE_PRIVATE).edit()
+                .putString("guest_image_uri", selected.toString()).apply();
+        if (guestImageStatus != null) guestImageStatus.setText(getSavedGuestImageLabel());
+        Toast.makeText(this, "Guest image selected. Attach it manually in QubeVM.", Toast.LENGTH_LONG).show();
+    }
+
+    private String getSavedGuestImageLabel() {
+        String saved = getSharedPreferences("droidspace_vm", MODE_PRIVATE).getString("guest_image_uri", null);
+        if (saved == null) return "No guest image selected yet.";
+        Uri uri = Uri.parse(saved);
+        String name = uri.getLastPathSegment();
+        try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int nameColumn = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (nameColumn >= 0) name = cursor.getString(nameColumn);
+            }
+        } catch (Exception ignored) {
+            // Display the URI's final path segment if provider metadata is unavailable.
+        }
+        return "Selected image: " + (name == null ? "Unknown file" : name)
+                + "\\nSaved URI: " + uri;
     }
 
     private void startVm() {
