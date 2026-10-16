@@ -1,6 +1,12 @@
 package com.droidspace16.app;
 
 import android.app.Activity;
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
+import android.database.Cursor;
+import android.os.Environment;
 import android.os.Bundle;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -26,11 +32,41 @@ public class MainActivity extends Activity {
     private static final String SIMULATOR_URL =
         "https://id-preview--517422a2-fc10-4df2-9be0-6b1d7dfa2b34.lovable.app";
     private LinearLayout root;
+    private long engineDownloadId = -1L;
+    private final BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {
+                long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1L);
+                if (id != engineDownloadId) return;
+                DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+                try (Cursor cursor = manager.query(new DownloadManager.Query().setFilterById(id))) {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+                        if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                            Uri apkUri = manager.getUriForDownloadedFile(id);
+                            if (apkUri != null) {
+                                Intent install = new Intent(Intent.ACTION_VIEW);
+                                install.setDataAndType(apkUri, "application/vnd.android.package-archive");
+                                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                try { startActivity(install); }
+                                catch (Exception e) { Toast.makeText(MainActivity.this, "Download complete. Open the APK from Downloads to install it.", Toast.LENGTH_LONG).show(); }
+                            }
+                        } else {
+                            Toast.makeText(MainActivity.this, "VM engine download failed. Please try again.", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(MainActivity.this, "Could not verify the downloaded engine APK.", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    };
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().setStatusBarColor(Color.rgb(9, 14, 28));
         getWindow().setNavigationBarColor(Color.rgb(9, 14, 28));
+        registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
         buildHome();
     }
 
