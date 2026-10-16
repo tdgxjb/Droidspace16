@@ -252,11 +252,11 @@ public class MainActivity extends Activity {
         boolean engineInstalled = getPackageManager().getLaunchIntentForPackage(QUBEVm_PACKAGE) != null;
 
         return "Android version: " + android.os.Build.VERSION.RELEASE
-                + " (API " + android.os.Build.VERSION.SDK_INT + ")\\n"
-                + "Device model: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + "\\n"
-                + "Total RAM: " + formatBytes(memory.totalMem) + " | Available: " + formatBytes(memory.availMem) + "\\n"
-                + "App storage volume: " + formatBytes(totalBytes) + " total | " + formatBytes(freeBytes) + " free\\n"
-                + "QubeVM engine: " + (engineInstalled ? "Installed" : "Not installed") + "\\n"
+                + " (API " + android.os.Build.VERSION.SDK_INT + ")\n"
+                + "Device model: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + "\n"
+                + "Total RAM: " + formatBytes(memory.totalMem) + " | Available: " + formatBytes(memory.availMem) + "\n"
+                + "App storage volume: " + formatBytes(totalBytes) + " total | " + formatBytes(freeBytes) + " free\n"
+                + "QubeVM engine: " + (engineInstalled ? "Installed" : "Not installed") + "\n"
                 + "Guest VM status: Managed by QubeVM (not directly monitored by DroidSpace)";
     }
 
@@ -327,7 +327,7 @@ public class MainActivity extends Activity {
             // Display the URI's final path segment if provider metadata is unavailable.
         }
         return "Selected image: " + (name == null ? "Unknown file" : name)
-                + "\\nSaved URI: " + uri;
+                + "\nSaved URI: " + uri;
     }
 
     private void startVm() {
