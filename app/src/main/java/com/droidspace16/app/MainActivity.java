@@ -109,6 +109,30 @@ public class MainActivity extends Activity {
         deviceInfo.setPadding(0, 0, 0, dp(12));
         root.addView(deviceInfo);
 
+        TextView statusTitle = new TextView(this);
+        statusTitle.setText("DEVICE & ENGINE STATUS");
+        statusTitle.setTextColor(Color.WHITE);
+        statusTitle.setTextSize(14);
+        statusTitle.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        statusTitle.setPadding(0, dp(8), 0, dp(6));
+        root.addView(statusTitle);
+
+        TextView statusInfo = new TextView(this);
+        statusInfo.setText(getDeviceStatus());
+        statusInfo.setTextColor(Color.rgb(205, 214, 230));
+        statusInfo.setTextSize(13);
+        statusInfo.setLineSpacing(dp(3), 1.0f);
+        statusInfo.setPadding(0, 0, 0, dp(14));
+        root.addView(statusInfo);
+
+        Button refreshStatus = new Button(this);
+        refreshStatus.setText("Refresh Device Status");
+        refreshStatus.setAllCaps(false);
+        refreshStatus.setOnClickListener(v -> statusInfo.setText(getDeviceStatus()));
+        LinearLayout.LayoutParams refreshParams = matchWrap();
+        refreshParams.bottomMargin = dp(8);
+        root.addView(refreshStatus, refreshParams);
+
         Button start = new Button(this);
         start.setText("START VIRTUAL MACHINE");
         start.setAllCaps(false);
@@ -174,6 +198,34 @@ public class MainActivity extends Activity {
 
         scroll.addView(root);
         setContentView(scroll);
+    }
+
+    private String getDeviceStatus() {
+        android.app.ActivityManager activityManager =
+                (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        android.app.ActivityManager.MemoryInfo memory = new android.app.ActivityManager.MemoryInfo();
+        if (activityManager != null) activityManager.getMemoryInfo(memory);
+
+        java.io.File dataDir = getFilesDir();
+        long freeBytes = dataDir.getUsableSpace();
+        long totalBytes = dataDir.getTotalSpace();
+        boolean engineInstalled = getPackageManager().getLaunchIntentForPackage(QUBEVm_PACKAGE) != null;
+
+        return "Android version: " + android.os.Build.VERSION.RELEASE
+                + " (API " + android.os.Build.VERSION.SDK_INT + ")\\n"
+                + "Device model: " + android.os.Build.MANUFACTURER + " " + android.os.Build.MODEL + "\\n"
+                + "Total RAM: " + formatBytes(memory.totalMem) + " | Available: " + formatBytes(memory.availMem) + "\\n"
+                + "App storage volume: " + formatBytes(totalBytes) + " total | " + formatBytes(freeBytes) + " free\\n"
+                + "QubeVM engine: " + (engineInstalled ? "Installed" : "Not installed") + "\\n"
+                + "Guest VM status: Managed by QubeVM (not directly monitored by DroidSpace)";
+    }
+
+    private String formatBytes(long bytes) {
+        if (bytes < 1024L) return bytes + " B";
+        int unit = (int) (Math.log(bytes) / Math.log(1024));
+        String[] units = {"B", "KB", "MB", "GB", "TB"};
+        unit = Math.min(unit, units.length - 1);
+        return String.format(java.util.Locale.US, "%.1f %s", bytes / Math.pow(1024, unit), units[unit]);
     }
 
     private String getHostArchitecture() {
