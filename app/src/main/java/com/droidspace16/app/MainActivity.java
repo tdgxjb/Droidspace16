@@ -37,6 +37,7 @@ public class MainActivity extends Activity {
     private Uri pendingInstallUri;
     private static final int REQUEST_GUEST_IMAGE = 4107;
     private TextView guestImageStatus;
+    private TextView deviceStatusInfo;
     private final BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {
@@ -119,18 +120,18 @@ public class MainActivity extends Activity {
         statusTitle.setPadding(0, dp(8), 0, dp(6));
         root.addView(statusTitle);
 
-        TextView statusInfo = new TextView(this);
-        statusInfo.setText(getDeviceStatus());
-        statusInfo.setTextColor(Color.rgb(205, 214, 230));
-        statusInfo.setTextSize(13);
-        statusInfo.setLineSpacing(dp(3), 1.0f);
-        statusInfo.setPadding(0, 0, 0, dp(14));
-        root.addView(statusInfo);
+        deviceStatusInfo = new TextView(this);
+        deviceStatusInfo.setText(getDeviceStatus());
+        deviceStatusInfo.setTextColor(Color.rgb(205, 214, 230));
+        deviceStatusInfo.setTextSize(13);
+        deviceStatusInfo.setLineSpacing(dp(3), 1.0f);
+        deviceStatusInfo.setPadding(0, 0, 0, dp(14));
+        root.addView(deviceStatusInfo);
 
         Button refreshStatus = new Button(this);
         refreshStatus.setText("Refresh Device Status");
         refreshStatus.setAllCaps(false);
-        refreshStatus.setOnClickListener(v -> statusInfo.setText(getDeviceStatus()));
+        refreshStatus.setOnClickListener(v -> refreshDeviceStatus());
         LinearLayout.LayoutParams refreshParams = matchWrap();
         refreshParams.bottomMargin = dp(8);
         root.addView(refreshStatus, refreshParams);
@@ -238,6 +239,16 @@ public class MainActivity extends Activity {
 
         scroll.addView(root);
         setContentView(scroll);
+    }
+
+    private void refreshDeviceStatus() {
+        if (deviceStatusInfo != null) deviceStatusInfo.setText(getDeviceStatus());
+        if (guestImageStatus != null) guestImageStatus.setText(getSavedGuestImageLabel());
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        refreshDeviceStatus();
     }
 
     private String getDeviceStatus() {
