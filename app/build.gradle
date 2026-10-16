@@ -10,13 +10,19 @@ android {
         applicationId 'com.droidspace16.app'
         minSdk 23
         targetSdk 28
-        versionCode 2
-        versionName '1.1.0'
+        versionCode 3
+        versionName '1.2.0'
+    }
 
-        // Support both modern 64-bit ARM and older 32-bit ARM Android phones.
-        // The current launcher is Java-only and contains no ABI-specific native code.
-        ndk {
-            abiFilters 'arm64-v8a', 'armeabi-v7a'
+    // Produce separate ARMv7 and ARM64 APK variants, plus a universal APK.
+    // The current Java launcher has no native .so libraries; this config alone
+    // does not make the separately packaged QEMU engine support ARMv7.
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a'
+            universalApk true
         }
     }
 }
