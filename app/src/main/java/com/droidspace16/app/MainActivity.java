@@ -256,11 +256,42 @@ public class MainActivity extends Activity {
 
     private void openEngineDownload() {
         if (!supportsOfficialEngine()) return;
+        if (getPackageManager().getLaunchIntentForPackage(QUBEVm_PACKAGE) != null) {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("VM engine already installed")
+                .setMessage("QubeVM is installed. Tap Start Virtual Machine to open it.")
+                .setPositiveButton("Start VM", (dialog, which) -> startVm())
+                .setNegativeButton("Cancel", null)
+                .show();
+            return;
+        }
         try {
-            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(QUBEVm_APK));
-            startActivity(intent);
+            DownloadManager manager = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
+            DownloadManager.Request request = new DownloadManager.Request(Uri.parse(QUBEVm_APK));
+            request.setTitle("DroidSpace VM Engine");
+            request.setDescription("Downloading the official QubeVM ARM64 engine APK");
+            request.setMimeType("application/vnd.android.package-archive");
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+            request.setAllowedOverMetered(true);
+            request.setAllowedOverRoaming(false);
+            request.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS,
+                    "QubeVM-ARM64.apk");
+            engineDownloadId = manager.enqueue(request);
+            Toast.makeText(this, "Engine download started. Check the notification shade for progress.", Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(this, "Could not open download link.", Toast.LENGTH_LONG).show();
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("Download could not start")
+                .setMessage("Please check your internet connection and try again. You can also download the official ARM64 APK from the QubeVM release page.")
+                .setPositiveButton("Open release page", (dialog, which) -> {
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW,
+                            Uri.parse("https://github.com/rhn-1k/QubeVM/releases/tag/7.1.3")));
+                    } catch (Exception ignored) {
+                        Toast.makeText(this, "Could not open the release page.", Toast.LENGTH_LONG).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
         }
     }
 
