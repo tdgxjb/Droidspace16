@@ -12,6 +12,7 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.content.Intent;
 import android.net.Uri;
+import android.provider.Settings;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -33,6 +34,7 @@ public class MainActivity extends Activity {
         "https://id-preview--517422a2-fc10-4df2-9be0-6b1d7dfa2b34.lovable.app";
     private LinearLayout root;
     private long engineDownloadId = -1L;
+    private Uri pendingInstallUri;
     private final BroadcastReceiver downloadReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
             if (DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())) {
@@ -44,13 +46,7 @@ public class MainActivity extends Activity {
                         int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
                         if (status == DownloadManager.STATUS_SUCCESSFUL) {
                             Uri apkUri = manager.getUriForDownloadedFile(id);
-                            if (apkUri != null) {
-                                Intent install = new Intent(Intent.ACTION_VIEW);
-                                install.setDataAndType(apkUri, "application/vnd.android.package-archive");
-                                install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                                try { startActivity(install); }
-                                catch (Exception e) { Toast.makeText(MainActivity.this, "Download complete. Open the APK from Downloads to install it.", Toast.LENGTH_LONG).show(); }
-                            }
+                            if (apkUri != null) beginInstall(apkUri);
                         } else {
                             Toast.makeText(MainActivity.this, "VM engine download failed. Please try again.", Toast.LENGTH_LONG).show();
                         }
@@ -179,6 +175,44 @@ public class MainActivity extends Activity {
                 .setNegativeButton("Cancel", null)
                 .setPositiveButton("Get engine", (dialog, which) -> openEngineDownload())
                 .show();
+        }
+    }
+
+    private void beginInstall(Uri apkUri) {
+        pendingInstallUri = apkUri;
+        if (android.os.Build.VERSION.SDK_INT >= 26
+                && !getPackageManager().canRequestPackageInstalls()) {
+            Toast.makeText(this, "Allow DroidSpace to install this downloaded APK, then return here.", Toast.LENGTH_LONG).show();
+            Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                    Uri.parse("package:" + getPackageName()));
+            try { startActivity(settings); }
+            catch (Exception e) {
+                Toast.makeText(this, "Open Settings and allow installing unknown apps for DroidSpace.", Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+        launchInstaller(apkUri);
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        if (pendingInstallUri != null
+                && (android.os.Build.VERSION.SDK_INT < 26
+                || getPackageManager().canRequestPackageInstalls())) {
+            Uri uri = pendingInstallUri;
+            pendingInstallUri = null;
+            launchInstaller(uri);
+        }
+    }
+
+    private void launchInstaller(Uri apkUri) {
+        try {
+            Intent install = new Intent(Intent.ACTION_VIEW);
+            install.setDataAndType(apkUri, "application/vnd.android.package-archive");
+            install.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(install);
+        } catch (Exception e) {
+            Toast.makeText(this, "Download complete. Open Downloads and install QubeVM-ARM64.apk.", Toast.LENGTH_LONG).show();
         }
     }
 
