@@ -246,11 +246,6 @@ public class MainActivity extends Activity {
         if (guestImageStatus != null) guestImageStatus.setText(getSavedGuestImageLabel());
     }
 
-    @Override protected void onResume() {
-        super.onResume();
-        refreshDeviceStatus();
-    }
-
     private String getDeviceStatus() {
         android.app.ActivityManager activityManager =
                 (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
@@ -385,6 +380,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onResume() {
         super.onResume();
+        refreshDeviceStatus();
         if (pendingInstallUri != null
                 && (android.os.Build.VERSION.SDK_INT < 26
                 || getPackageManager().canRequestPackageInstalls())) {
